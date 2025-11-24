@@ -17,27 +17,36 @@ Visualize results with color-coded point clouds
 Generate processed frames and video outputs
 
 🏗️ Project Structure
-text
- plane_fitting_final.py    # Main processing pipeline
- viz.py                    # Visualization and point cloud inspection
- generate_screens.py       # Generate screenshots from PLY files
- generate_video.py         # Create video from processed frames
- processed_frames/         # Output directory for processed PLY files
- screenshots/              # Output directory for rendered images
- output.mp4               # Final video output
+
+plane_fitting_final.py    # Main processing pipeline
+
+viz.py                    # Visualization and point cloud inspection
+
+generate_screens.py       # Generate screenshots from PLY files
+
+generate_video.py         # Create video from processed frames
+
+processed_frames/         # Output directory for processed PLY files
+
+screenshots/              # Output directory for rendered images
+
+output.mp4               # Final video output
  
 🔧 Core Components
 1. Main Processing Pipeline (plane_fitting_final.py)
 Key Functions:
 
 knn_search(): KD-tree based nearest neighbor search for point cloud smoothing
+
 smooth_point_cloud_numpy(): Applies iterative smoothing using KNN averaging
+
 process_point_cloud(): Main processing function that:
-Filters invalid points and downsamples
-Removes outliers using radius-based filtering
-Smooths the point cloud
-Performs RANSAC plane fitting
-Detects potholes and bumps using statistical thresholds
+
+Filters invalid points and downsamples,
+Removes outliers using radius-based filtering,
+Smooths the point cloud,
+Performs RANSAC plane fitting,
+Detects potholes and bumps using statistical thresholds,
 Colors points (red=potholes, blue=bumps, gray=background)
 
 Detection Logic:

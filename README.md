@@ -1,5 +1,9 @@
 Point Cloud Pothole and Bump Detection
+
 A computer vision project for detecting road surface anomalies (potholes and bumps) from ZED camera point cloud data using plane fitting and statistical analysis.
+
+![](screen.png)
+
 
 📋 Project Overview
 This system processes 3D point cloud data from ZED camera recordings to:
@@ -14,6 +18,7 @@ Generate processed frames and video outputs
 
 🏗️ Project Structure
 text
+
 ├── plane_fitting_final.py    # Main processing pipeline
 ├── viz.py                    # Visualization and point cloud inspection
 ├── generate_screens.py       # Generate screenshots from PLY files

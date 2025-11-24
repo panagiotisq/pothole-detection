@@ -1,6 +1,7 @@
 # Point Cloud Pothole and Bump Detection
 
 A computer vision project for detecting road surface anomalies (potholes and bumps) from ZED camera point cloud data using plane fitting and statistical analysis.
+(for a better explanation of the project , read the pdf report)
 
 ![](screen.png)
 

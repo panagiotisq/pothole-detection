@@ -5,7 +5,7 @@ A computer vision project for detecting road surface anomalies (potholes and bum
 ![](screen.png)
 
 
-📋 Project Overview
+📋 Project Overview:
 This system processes 3D point cloud data from ZED camera recordings to:
 
 Fit a reference plane to the road surface
@@ -16,7 +16,7 @@ Visualize results with color-coded point clouds
 
 Generate processed frames and video outputs
 
-🏗️ Project Structure
+🏗️ Project Structure:
 
 plane_fitting_final.py    # Main processing pipeline
 
@@ -32,7 +32,7 @@ screenshots/              # Output directory for rendered images
 
 output.mp4               # Final video output
  
-🔧 Core Components
+🔧 Core Components:
 1. Main Processing Pipeline (plane_fitting_final.py)
 Key Functions:
 
@@ -69,17 +69,15 @@ generate_video.py: Combines screenshots into MP4 video with adjustable FPS
 
 🚀 Usage
 1. Process Point Cloud Data
-bash
-python plane_fitting_final.py
-Configuration in main():
+bash :python plane_fitting_final.py
 
+Configuration in main():
 svo_path: Path to ZED camera recording file
 start_frame, end_frame: Frame range to process
 output_folder: Directory for processed PLY files
 
 2. Visualize Results
-bash
-python viz.py
+bash: python viz.py
 Modify the ply_file variable to specify which processed frame to view.
 
 3. Generate Video

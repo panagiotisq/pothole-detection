@@ -1,8 +1,10 @@
 # Point Cloud–Based Pothole and Bump Detection
 
-A computer vision pipeline for detecting **road surface anomalies**—specifically **potholes (depressions)** and **bumps (elevations)**—from **ZED stereo camera point cloud data**, using **RANSAC plane fitting** and **statistical analysis**.
+A computer vision pipeline for detecting **road surface anomalies**—specifically **potholes (depressions)** and **bumps (elevations)**—from **ZED stereo camera point cloud data**.
 
-> For a detailed explanation of the methodology, assumptions, and evaluation, refer to the accompanying **PDF report**.
+This project leverages **RANSAC plane fitting** and **statistical analysis** to classify anomalies in 3D space, with visualization support for both **3D point clouds** and **Augmented Reality (AR)–style 2D video overlays**.
+
+> 📄 For a detailed explanation of the methodology, assumptions, and evaluation, refer to the accompanying **PDF report**.
 
 ---
 
@@ -11,37 +13,58 @@ A computer vision pipeline for detecting **road surface anomalies**—specifical
 This system processes 3D point cloud data extracted from ZED camera recordings to:
 
 - Estimate the dominant **road surface plane**
-- Identify **deviations** from the plane as potholes or bumps
-- Apply **statistical validation** to reduce false detections
+- Identify **deviations** from the plane using statistical thresholds (Z-score / standard deviation)
+- Apply **KNN smoothing** and **outlier removal** to reduce sensor noise
 - Produce **color-coded 3D point clouds**
-- Generate **rendered frames** and a **final video visualization**
+- **Reproject detected 3D anomalies onto the original 2D video** for AR-style visualization
 
 ---
 
 ## Example Output
 
-![Processed Point Cloud Example](screen.png)
+### 1. 3D Point Cloud Analysis
+![Processed Point Cloud](screen.png)
 
-**Color legend:**
-- **Red** → Potholes (negative deviations)
-- **Blue** → Bumps (positive deviations)
-- **Gray** → Road surface (inliers)
+*3D view of the road surface showing plane inliers (gray), potholes (red), and bumps (blue).*
+
+---
+
+### 2. 2D Video Overlay
+![Overlayed Video Frame](overlayed.png)
+
+*Reprojection of detected anomalies onto the original video frame.*
+
+#### Color Legend
+- **Red** → Potholes (depressions / negative deviations)
+- **Blue** → Bumps (elevations / positive deviations)
+- **Gray** → Road surface (plane inliers)
 
 ---
 
 ## Project Structure
 
-```
+```text
 .
-├── plane_fitting_final.py     # Main processing pipeline
-├── viz.py                     # Interactive point cloud visualization
-├── generate_screens.py        # Render 2D screenshots from PLY files
-├── generate_video.py          # Create MP4 video from rendered frames
-├── processed_frames/          # Output directory for processed PLY files
-├── screenshots/               # Rendered images for video generation
-├── output.mp4                 # Final visualization video
-└── screen.png                 # Sample visualization image
+├── plane_fitting_final.py     # Main 3D processing pipeline
+├── potholes_overlayed.py      # Generates 2D AR-style overlay video
+├── viz.py                     # Interactive 3D point cloud visualization
+├── generate_screens.py        # Render 2D screenshots from 3D PLY files
+├── generate_video.py          # Create MP4 from rendered screenshots
+├── processed_frames/          # Output directory for processed .ply files
+├── screenshots/               # Intermediate rendered images
+├── output.mp4                 # Final 3D visualization video
+├── output_overlayed.mp4       # Final 2D AR-style video
+├── screen.png                 # Sample 3D output
+└── overlayed.png              # Sample 2D overlay output
 ```
+
+---
+
+## Data Source
+
+- **Dataset:** Villanova Pothole Dataset  
+- **Source File:** `HD2K_SN39967967_08-46-22.svo2`  
+- **Hardware:** Stereolabs **ZED Stereo Camera**
 
 ---
 
@@ -49,78 +72,84 @@ This system processes 3D point cloud data extracted from ZED camera recordings t
 
 ### 1. Main Processing Pipeline (`plane_fitting_final.py`)
 
-This script implements the complete detection workflow.
+Implements the full 3D anomaly detection workflow.  
+Reads raw `.svo2` data, processes depth information, and outputs colored `.ply` point clouds.
 
-#### Key Functions
+#### Key Techniques
 
-- **`knn_search()`**  
-  KD-tree–based nearest neighbor search for spatial smoothing.
-
-- **`smooth_point_cloud_numpy()`**  
-  Iterative KNN averaging to reduce sensor noise.
-
-- **`process_point_cloud()`**  
-  End-to-end processing routine:
-  - Invalid point filtering and voxel downsampling  
-  - Radius-based outlier removal  
-  - Iterative point cloud smoothing  
-  - RANSAC-based plane fitting  
-  - Distance computation from plane  
-  - Statistical anomaly detection  
-  - Color assignment and classification  
-
-#### Detection Logic
-
-- Initial thresholds:
-  - **7th percentile** → pothole candidates
-  - **93rd percentile** → bump candidates
-- Confirmation thresholds:
-  - **4th percentile** → potholes
-  - **96th percentile** → bumps
-- Statistical validation:
-  - Potholes: **≥ 2.2σ**
-  - Bumps: **≥ 2.5σ**
-- Additional localized outlier removal applied to detected regions
-
-Each frame is classified as:
-- `flat`
-- `pothole`
-- `bump`
-- `both`
+- **KNN Smoothing**
+  - `knn_search()`
+  - `smooth_point_cloud_numpy()`
+- **RANSAC Plane Fitting**
+  - Robust estimation of the dominant road surface
+- **Statistical Thresholding**
+  - **Potholes:**  
+    - Below 4th percentile  
+    - Distance > **2.2σ**
+  - **Bumps:**  
+    - Above 96th percentile  
+    - Distance > **2.5σ**
+- **Frame-Level Classification**
+  - Flat
+  - Pothole
+  - Bump
+  - Both
 
 ---
 
-### 2. Visualization (`viz.py`)
+### 2. 2D Overlay Visualization (`potholes_overlayed.py`)
 
-- Loads processed `.ply` point clouds
-- Interactive 3D inspection using **Open3D**
-- Optional post-processing for detected regions (commented for experimentation)
+**New Feature** — bridges the 3D and 2D domains.
+
+#### Functionality
+
+- Reads processed `.ply` files and the original ZED video
+- Reprojects 3D points onto 2D image space using a **pinhole camera model**
+- Uses ZED intrinsic parameters for accurate reprojection
+- Draws **dense, semi-transparent overlays** to highlight anomalies
+
+#### Output
+
+- Generates a **slow-motion (10 FPS)** annotated video  
+- Improves qualitative inspection of detection accuracy
 
 ---
 
-### 3. Video Generation Pipeline
+### 3. 3D Rendering Tools
 
-#### `generate_screens.py`
-- Renders 2D screenshots from 3D point clouds
-- Supports configurable camera rotation
-
-#### `generate_video.py`
-- Converts rendered images into an MP4 video
-- Adjustable frames-per-second (FPS)
+- **`viz.py`**
+  - Interactive Open3D visualization for frame-by-frame inspection
+- **`generate_screens.py`**
+  - Renders 2D images from 3D point clouds
+- **`generate_video.py`**
+  - Produces a rotating 3D visualization video
 
 ---
 
 ## Usage
 
-### 1. Process Point Cloud Data
+### Step 1: Process the Data
 
 ```bash
 python plane_fitting_final.py
 ```
 
----
+### Step 2: Generate Visualizations
 
-### 2. Visualize a Processed Frame
+#### Option A: 2D AR-Style Overlay Video (Recommended)
+
+```bash
+python potholes_overlayed.py
+```
+
+#### Option B: 3D Rendered Video
+
+```bash
+python generate_screens.py
+python generate_video.py
+```
+
+### Step 3: Interactive Inspection
 
 ```bash
 python viz.py
@@ -128,19 +157,10 @@ python viz.py
 
 ---
 
-### 3. Generate Video Output
-
-```bash
-python generate_screens.py
-python generate_video.py
-```
-
----
-
 ## Dependencies
 
 - Python 3.x
-- `pyzed.sl`
+- `pyzed.sl` (ZED SDK)
 - `open3d`
 - `numpy`
 - `scipy`
@@ -151,8 +171,9 @@ python generate_video.py
 
 ## Applications
 
-- Road maintenance and inspection  
-- Infrastructure monitoring  
-- Autonomous vehicle perception  
-- Smart city sensing systems  
+- Road maintenance and automated inspection
+- Infrastructure monitoring
+- Autonomous vehicle perception
+- Smart city sensing systems
+
 
